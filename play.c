@@ -5,18 +5,6 @@
 
 #define FRAMES_PER_BUFFER       1024
 
-/* handle errors produced by port audio functions */
-int handlePaError(PaError err); 
-
-/* Extract song data into an array */
-int getAudioData(const char *file, AIFF_Ref *song, int **sampleArray, uint64_t *nSamples);
-
-/* Clean song parameters after playing the file */
-int cleanSong(int *soundSamples, AIFF_Ref *song);
-
-/* Using portaudio, stream song to default audio device */
-int streamSong(int *soundSamples, int numSamples);
-
 /* play the AIFF referenced by argv[1]
      Usage: play musicFile.aiff */
 int main(int argc, char *argv[]) {
@@ -44,8 +32,15 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+/* Get song metadata into song, waveform data into *sampleArray, and the number
+   of sample frames into nSampleFrames. Do so without using libaiff */
+int getAudioDataIND(const char *file, AIFF_Ref_basic *song, 
+                    int **sampleArray, uint64_t *nSampleFrames) {
+
+}
 int getAudioData(const char *file, AIFF_Ref *song, int **sampleArray, uint64_t *nSamples) {
-    /* Open file */
+    /* Open file, store file pointer into song, as well as matadata about song, including
+       common chunk info and header info */
     *song = AIFF_OpenFile(file, F_RDONLY);
     if (!*song) 
     {
