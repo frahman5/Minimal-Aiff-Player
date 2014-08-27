@@ -2,6 +2,7 @@
 #include <libaiff/libaiff.h>    // for parsing AIFF
 #include "portaudio.h"          // for sending sound samples to sound card
 #include <math.h>               // pow
+#include "play.h"
 
 #define FRAMES_PER_BUFFER       1024
 
@@ -32,10 +33,79 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+AIFF_Ref_Basic openAIFF_File(const char *file) {
+    AIFF_Ref_basic *songRef;     // reference data structure
+    IFFHeader hdr;               // create a struct that holds header info 
+                                     // (header id, file id, length of header)
+
+    // ask for space on the heap for a song reference
+    songRef = malloc(sizeof(AIFF_Ref_Basic));   
+    if (!songRef) {
+        free(songRef);
+        return NULL:
+    }
+
+    // open the file and have the reference point to it
+    songRef->f = fopen(file, "rb");     // open the file in binary mode
+    if (songRef->f == NULL) {
+        free(songRef);
+        return NULL;
+    }
+
+    // read in header id
+    if (fread(&hdr, 1, 4, songRef->f) < 4) {
+        fclose(songRef->f);
+        free(songRef);
+        return NULL;
+    }
+
+    // If the header id is FORM, keep calm and carry on. Else return NULL
+    switch (hdr.hid) {
+        case 0x464F524D:                // "FORM", keep reading
+            // read in file length and file id
+            if (fread(&hdr.len), 1, 8, r->fd) < 8) {
+                fclose(songRef->f);
+                free(songRef);
+                return NULL;
+            }  
+            // if song length is 0, fuck it all
+            if (hdr.len == 0) {
+                fclose(songRef->f);
+                free(songRef);
+                return NULL;
+            }
+
+            // Check the format type (make sure its AIFF or AIFC);
+            songRef->format = hdr.fid;        // storm file format type in reference
+            switch (r->format) {
+                case AIFF_TYPE_AIFF:
+                case AIFF_TYPE_AIFC:
+                    break;
+                default:                        // not good! abort!
+                    fclose(songRef->f);
+                    free(songRef);
+                    return NULL;
+            }
+
+            // Store the common chunk info into the songRef
+            /* TO DO */
+            break;
+        default:
+            fclose(songRef->f);
+            free(songRef);
+            return NULL;
+        // case FORM
+        // case LIST or CAT or other
+    }
+
+    return songRef;
+
+}
 /* Get song metadata into song, waveform data into *sampleArray, and the number
    of sample frames into nSampleFrames. Do so without using libaiff */
-int getAudioDataIND(const char *file, AIFF_Ref_basic *song, 
+int getAudioDataIND(const char *file, AIFF_Ref_Basic *song, 
                     int **sampleArray, uint64_t *nSampleFrames) {
+    return 0;
 
 }
 int getAudioData(const char *file, AIFF_Ref *song, int **sampleArray, uint64_t *nSamples) {
@@ -48,6 +118,8 @@ int getAudioData(const char *file, AIFF_Ref *song, int **sampleArray, uint64_t *
         AIFF_CloseFile(*song);
         return -1;
     }
+    printf("Song format: %08x\n", (*song)->format);
+    printf("Song audio format: %08x\n", (*song)->audioFormat);
 
     /* Get sound format info */
     uint64_t seconds;
@@ -74,6 +146,7 @@ int getAudioData(const char *file, AIFF_Ref *song, int **sampleArray, uint64_t *
 }
 
 int streamSong(int *soundSamples, int numSamples) {
+    printf("numSampleFrames: %d\n", numSamples);
     PaError err;
     PaStream *stream;
     int buffer[FRAMES_PER_BUFFER][2];           // stereo output buffer
