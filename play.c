@@ -1,9 +1,9 @@
 /* == A minimal AIFF player that uses libAIFF to parse the AIFF file, 
       and uses libportaudio to stream the file to audio devices == */
-
 #define LIBAIFF_NOCOMPAT 1      // do not use LibAiff 2 API compatability
 #include <math.h>               // pow
 #include "play.h"
+#include "streamAudio.h"
 
 
 /* play the AIFF referenced by argv[1]

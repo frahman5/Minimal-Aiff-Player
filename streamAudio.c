@@ -1,5 +1,6 @@
 /* == Holds functions that sends a stream of audio samples to the output
       devices == */
+#import "streamAudio.h"
 
 int streamSong(int *soundSamples, int numSamples) {
     printf("numSampleFrames: %d\n", numSamples);

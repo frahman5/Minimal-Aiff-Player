@@ -1,6 +1,9 @@
 #include <stdint.h>             // uint types
 #include <stdio.h>              // FILE
 
+/* == Typedefs == */
+typedef uint32_t IFFType;       // represents 4 ASCII digits
+
 /* Struct for AIFF reading */
 struct AIFF_Ref_Basic {
     FILE *f;                    // pointer to AIFF file
@@ -22,12 +25,13 @@ struct IFFHeader {
 };
 typedef struct IFFHeader IFFHeader;
 
-/* == Typedefs == */
-typedef uint32_t IFFType;       // represents 4 ASCII digits
+
+/* == IFF codes == */
+#define IFF_TYPE_FORM 0x4D524F46    // little endian ASCII "FORM"
 
 /* == AIFF types == */
-#define AIFF_TYPE_AIFF 0x41494646  // big endian ASCII "AIFF"
-#define AIFF_TYPE_AIFC 0x41494643  // big endian ASCII "AIFC"
+#define AIFF_TYPE_AIFF 0x46464941  // little endian ASCII "AIFF"
+#define AIFF_TYPE_AIFC 0x43464941  // big endian ASCII "AIFC"
 
                 /* Function prototypes */
 /* Open file (for reading) and store common chunk metadata */
