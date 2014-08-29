@@ -3,5 +3,5 @@ play: play.c streamAudio.c
 	# -lm links in the math library, which LibAiff relies on
 	# -l "libportaudio.a" links in lib port audio
 	# -laiff links in LibAiff. The documentation says you must do this
-test: playIND.c test.c
+test: playIND.c test.c endian.h
 	gcc playIND.c test.c -o test
