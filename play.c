@@ -8,30 +8,30 @@
 
 /* play the AIFF referenced by argv[1]
      Usage: play musicFile.aiff */
-int main(int argc, char *argv[]) {
-    /* portaudio and AIFF parameters */
-    PaError err;
-    AIFF_Ref song;
+// int main(int argc, char *argv[]) {
+//     /* portaudio and AIFF parameters */
+//     PaError err;
+//     AIFF_Ref song;
     
-    /* Get song data */
-    int *soundSamples;
-    uint64_t numSamples;
-    const char *songFile = argv[1];
-    if (getAudioData(songFile, &song, &soundSamples, &numSamples) < 0)
-    {
-        fprintf(stderr, "Could not get audio data from %s\n", songFile);
-        abort();
-    }
-    printf("We got audio data succesfully\n");
+//     /* Get song data */
+//     int *soundSamples;
+//     uint64_t numSamples;
+//     const char *songFile = argv[1];
+//     if (getAudioData(songFile, &song, &soundSamples, &numSamples) < 0)
+//     {
+//         fprintf(stderr, "Could not get audio data from %s\n", songFile);
+//         abort();
+//     }
+//     printf("We got audio data succesfully\n");
 
-    /* Stream song to default audio device */
-    if ((err = streamSong(soundSamples, numSamples)) < 0) handlePaError(err);
+//     /* Stream song to default audio device */
+//     if ((err = streamSong(soundSamples, numSamples)) < 0) handlePaError(err);
 
-    /* Clean up AIFF references and soundSamples */
-    cleanSong(soundSamples, &song);
+//     /* Clean up AIFF references and soundSamples */
+//     cleanSong(soundSamples, &song);
     
-    return 0;
-}
+//     return 0;
+// }
 
 
 int getAudioData(const char *file, AIFF_Ref *song, int **sampleArray, uint64_t *nSamples) {

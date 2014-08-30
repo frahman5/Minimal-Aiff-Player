@@ -1,6 +1,7 @@
 #include <stdint.h>             // uint types
 #include <stdio.h>              // FILE
 #include "endian.h"             // handles endian issues
+#include "streamAudio.h"
 
 /*
  * Infinite & NAN values
@@ -61,6 +62,10 @@ typedef struct IFFChunk IFFChunk;
                 /* Function prototypes */
 /* Open file (for reading) and store common chunk metadata */
 AIFF_Ref_Basic *openAIFF_File(const char *file);
+/* Close file and free space for AIFF_REF_BASIC */
+int closeAIFF_File(AIFF_Ref_Basic *songRef);
+/* Clean up the song reference and the waveform data array */
+int cleanSongIND(int *soundSamples, AIFF_Ref_Basic *songRef);
 /* Without libaiff, get waveform data and song metadata from common chunk */
 int getAudioDataIND(const char *file, AIFF_Ref_Basic *song, 
                     int **sampleArray, uint64_t *nSampleFrames);
@@ -72,3 +77,5 @@ int init_ref_from_common_chunk(AIFF_Ref_Basic *songRef);
  * to be the chunk length.
  */
 int find_comm_or_ssnd_chunk(IFFType chunk, AIFF_Ref_Basic *songRef, uint32_t *length);
+/* Read in sound waveform data */
+int readSamples32Bit(AIFF_Ref_Basic *songRef, int **sampleArray, int numSamples);

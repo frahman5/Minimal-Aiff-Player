@@ -12,30 +12,30 @@
 
 /* play the AIFF referenced by argv[1]
      Usage: play musicFile.aiff */
-// int main(int argc, char *argv[]) {
-//     /* portaudio and AIFF parameters */
-//     PaError err;
-//     AIFF_Ref song;
+int main(int argc, char *argv[]) {
+    PaError err;
+    AIFF_Ref_Basic *songRef;
     
-//     /* Get song data */
-//     int *soundSamples;
-//     uint64_t numSamples;
-//     const char *songFile = argv[1];
-//     if (getAudioData(songFile, &song, &soundSamples, &numSamples) < 0)
-//     {
-//         fprintf(stderr, "Could not get audio data from %s\n", songFile);
-//         abort();
-//     }
-//     printf("We got audio data succesfully\n");
+    /* Get song data */
+    int *soundSamples;
+    uint64_t numSamples;
+    const char *songFile = argv[1];
+    if (getAudioDataIND(songFile, songRef, &soundSamples, &numSamples) < 0)
+    {
+        fprintf(stderr, "Could not get audio data from %s\n", songFile);
+        abort();
+    }
 
-//     /* Stream song to default audio device */
-//     if ((err = streamSong(soundSamples, numSamples)) < 0) handlePaError(err);
+    /* Stream song to default audio device */
+    if ((err = streamSong(soundSamples, numSamples)) < 0) handlePaError(err);
 
-//     /* Clean up AIFF references and soundSamples */
-//     cleanSong(soundSamples, &song);
+    printf("Finished streaming song\n");
+
+    /* Clean up AIFF references and soundSamples */
+    cleanSongIND(soundSamples, songRef);
     
-//     return 0;
-// }
+    return 1;
+}
 
 AIFF_Ref_Basic *openAIFF_File(const char *file) {
     AIFF_Ref_Basic *songRef;     // reference data structure
@@ -120,7 +120,7 @@ AIFF_Ref_Basic *openAIFF_File(const char *file) {
 /*
  * Read IEEE Extended Precision Numbers
  */
-double ieee754_read_extended(uint8_t* in) {
+double ieee754_read_extendedIND(uint8_t* in) {
     int sgn, exp;
     uint32_t low, high;
     double out;
@@ -183,7 +183,7 @@ int init_ref_from_common_chunk(AIFF_Ref_Basic *songRef) {
     songRef->numSampleFrames = ARRANGE_LE32(numSampleFrames);
     songRef->bitDepth = (int) ARRANGE_LE16(bitDepth);
     songRef->segmentSize = (int) ceil((songRef->bitDepth)/8);
-    songRef->sampleRate = ieee754_read_extended(sampleRateBuffer);
+    songRef->sampleRate = ieee754_read_extendedIND(sampleRateBuffer);
 
     return 1;
 
@@ -204,12 +204,9 @@ int find_comm_or_ssnd_chunk(IFFType chunk, AIFF_Ref_Basic *songRef, uint32_t *le
     while (1) {
         if (fread(&data, 1, 8, songRef->f) < 8) { return 0; }
         fseek(songRef->f, -6, SEEK_CUR);        // Gotta read starting every 2 bytes
-        // printf("%08x\n", data.id);
         if (data.id == chunk) {
             fseek(songRef->f, 6, SEEK_CUR);
-            // printf("Chunk id: %08x\n", data.id);
             *length = ARRANGE_LE32(data.len);
-            // printf("Common chunk lenth: %d\n", *length);
             return 1;
         }
     }
@@ -218,8 +215,84 @@ int find_comm_or_ssnd_chunk(IFFType chunk, AIFF_Ref_Basic *songRef, uint32_t *le
     return 0;
 
 }
-int getAudioDataIND(const char *file, AIFF_Ref_Basic *song, 
+int getAudioDataIND(const char *file, AIFF_Ref_Basic *songRef, 
                     int **sampleArray, uint64_t *nSampleFrames) {
-    return 0;
 
+    /* Open file, store file pointer into song, as well as metadata about song, 
+       (common chunk info and header info) */
+    songRef = openAIFF_File(file);
+    if (!songRef) 
+    {
+        fprintf(stderr, "Failed to open file %s\n", file);
+        closeAIFF_File(songRef);
+        return -1;
+    }
+
+    /* Extract audio samples */
+       // each frame has numChannels samples; each sample is 4 bytes long
+    int numBytes = (songRef->numSampleFrames * songRef->numChannels * 4); 
+    *sampleArray = (int *) malloc(numBytes);
+    if (!*sampleArray) {
+        fprintf( stderr, "soundSamples could not be allocated\n"); 
+        return -1;
+    }
+    readSamples32Bit(songRef, sampleArray, songRef->numSampleFrames * songRef->numChannels);
+
+    /* Let the caller know how many sample frames we have */
+    *nSampleFrames = songRef->numSampleFrames;
+
+    return 1;
+
+}
+
+int cleanSongIND(int *soundSamples, AIFF_Ref_Basic *songRef) {
+    closeAIFF_File(songRef);
+    printf("closed AIFF file succesffuly\n");
+    free(soundSamples);
+    return 1;
+}
+
+int closeAIFF_File(AIFF_Ref_Basic *songRef) {
+    printf("entered closeAIFF_File\n");
+    if (songRef->f) {
+        printf("Attempting to close songRef\n");
+        fclose(songRef->f);
+    }
+    printf("closed song file succesffuly\n");
+    free(songRef);
+    printf("freed songRef space successfully\n");
+    return 1;
+}
+
+int readSamples32Bit(AIFF_Ref_Basic *songRef, int **sampleArray, int numSamples) {
+    uint32_t len;
+    uint32_t offset, blockSize;
+
+    /* Locate SSND chunk */
+    if (!find_comm_or_ssnd_chunk(AIFF_TYPE_SSND, songRef, &len)){
+        printf("Could not find sound data chunk\n");
+        return -1;
+    }    
+
+    /* Read block alignment stuff and act appropriately */
+    if (fread(&offset, 1, 4, songRef->f) < 4 ||
+        fread(&blockSize, 1, 4, songRef->f) < 4) {
+        printf("Could not read offset or blockSize\n");
+        return -1;
+    }
+    assert (offset == 0);
+    assert (blockSize == 0);
+
+    /* store samples in sampleArray */
+    uint32_t byteDepth = (songRef->bitDepth) / 8;
+
+    for (int i = 0; i < numSamples; i++) {
+        // printf("Iter %d\n", i);
+        if (fread(&(*sampleArray)[i], 1, byteDepth, songRef->f) < byteDepth) {
+            printf("Could not read a soundWave data at sample %d\n", i);
+            return -1;
+        }
+        (*sampleArray)[i] = ARRANGE_LE32((int) (*sampleArray)[i]);
+    }
+    return 1;
 }
