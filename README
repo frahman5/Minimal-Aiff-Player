@@ -1,0 +1,17 @@
+A very minimal AIFF player designed for 64 bit x86 architecture. Not gauranteed
+to play other aiffs besides the two provided in this repository. The goal
+of the project was to understand how to parse aiff files. 
+
+Usage:
+
+/* == using independent player  == */
+make playIND
+./playIND AIFFs/ByYourSidePt1.aiff
+./playIND AIFFs/ByYourSidePt2.aiff
+bash backtobask.sh
+
+/* == using libAIFF to parse aiffs  == */
+make play
+./play AIFFs/ByYourSidePt1.aiff
+./play AIFFs/ByYourSidePt2.aiff
+bash backtobask.sh
