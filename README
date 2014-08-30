@@ -8,10 +8,9 @@ Usage:
 make playIND
 ./playIND AIFFs/ByYourSidePt1.aiff
 ./playIND AIFFs/ByYourSidePt2.aiff
-bash backtobask.sh
+bash backtoback.sh
 
 /* == using libAIFF to parse aiffs  == */
 make play
 ./play AIFFs/ByYourSidePt1.aiff
 ./play AIFFs/ByYourSidePt2.aiff
-bash backtobask.sh
